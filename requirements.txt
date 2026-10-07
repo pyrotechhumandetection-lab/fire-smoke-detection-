@@ -1,0 +1,14 @@
+# Fire & smoke RTSP detector - CPU-only dependencies
+#
+# The extra index below provides CPU-only PyTorch wheels (~120 MB instead of
+# ~2.5 GB for CUDA builds). No NVIDIA GPU or CUDA is needed.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch>=2.2
+torchvision>=0.17
+ultralytics>=8.4.0        # 8.4+ also loads the YOLO26 nano model
+opencv-python>=4.8        # full build with GUI (imshow). Do NOT use opencv-python-headless
+huggingface_hub>=0.23
+python-dotenv>=1.0
+PyYAML>=6.0
+numpy>=1.24

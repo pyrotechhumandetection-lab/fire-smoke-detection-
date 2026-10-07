@@ -1,0 +1,8 @@
+.venv/
+.env
+config.yaml
+models/
+snapshots/
+__pycache__/
+*.py[cod]
+.pytest_cache/

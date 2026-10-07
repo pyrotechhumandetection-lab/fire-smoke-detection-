@@ -1,0 +1,60 @@
+# =============================================================================
+#  Fire & Smoke RTSP detector - settings
+#  Username / password do NOT go here. Put them in .env (see .env.example).
+# =============================================================================
+
+stream:
+  # Camera RTSP URL *without* username/password - they are added from .env
+  # (RTSP_USERNAME / RTSP_PASSWORD, special characters are encoded for you).
+  # If RTSP_URL is set in .env it overrides this value.
+  #
+  # Use the camera's SUB-STREAM if it has one - it is much cheaper to decode:
+  #   Hikvision : rtsp://192.168.1.64:554/Streaming/Channels/102
+  #   Dahua     : rtsp://192.168.1.108:554/cam/realmonitor?channel=1&subtype=1
+  #   Reolink   : rtsp://192.168.1.10:554/h264Preview_01_sub
+  url: ""
+
+  ffmpeg_options: "rtsp_transport;tcp"  # OPENCV_FFMPEG_CAPTURE_OPTIONS ("key;value|key;value")
+  buffer_size: 1              # CAP_PROP_BUFFERSIZE. OpenCV's FFmpeg backend ignores it; the
+                              # grabber thread (keeps only the newest frame) is what prevents lag
+  open_timeout_s: 10          # give up a connection attempt after this long
+  read_timeout_s: 10          # no frame for this long = stream dead -> reconnect
+  reconnect_delay_s: 2        # first retry delay, doubles after each failed attempt ...
+  reconnect_max_delay_s: 30   # ... up to this maximum
+
+model:
+  # small : leeyunjai/yolo11-firedetect (firedetect-11s.pt) - more accurate, slower
+  # nano  : elvinguseinov/wildfire-detection-yolo11-yolo26-nano - about 2x faster
+  # auto  : start with small if this CPU runs it at >= min_fps (checked at startup),
+  #         and switch to nano if it later drops below min_fps on the live video
+  #         (median of the last 10 detections). Below 5 FPS, fire -> alert takes > ~1 s
+  variant: auto
+  min_fps: 5.0
+  imgsz: 416                  # 416 = faster, 480 = slightly better on small/far fires
+  cpu_threads: 0              # PyTorch threads, 0 = automatic (= physical cores; best here)
+  models_dir: models          # weights are downloaded here on first run
+  small:
+    repo_id: leeyunjai/yolo11-firedetect
+    filename: firedetect-11s.pt
+  nano:
+    repo_id: elvinguseinov/wildfire-detection-yolo11-yolo26-nano
+    filename: yolo11n.pt      # or yolo26n.pt (same accuracy, similar speed)
+
+detection:
+  every_n_frames: 3           # run YOLO on every 3rd frame, reuse the boxes in between
+  conf_threshold: 0.50        # minimum confidence for a box / alert
+  class_conf: {}              # optional per-class override, e.g. {smoke: 0.45}
+  iou: 0.45                   # NMS IoU threshold
+
+alert:
+  consecutive_frames: 3       # fire/smoke must be seen in N detection frames in a row
+  cooldown_s: 10              # minimum seconds between two alerts of the same class
+  snapshot_dir: snapshots     # annotated JPGs: fire_YYYYMMDD_HHMMSS.jpg
+  jpeg_quality: 90
+
+display:
+  enabled: true               # false = no window (headless, Ctrl+C to stop)
+  window_name: "Fire & Smoke Detection"
+  max_width: 1280             # wider frames are scaled down for display only
+
+stats_interval_s: 30          # print a performance line every N seconds (0 = off)
